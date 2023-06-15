@@ -1,0 +1,79 @@
+---
+title: 'ANA 515 Assignment 2: Loading/Saving/Describing Driving Data'
+author: "Kevin M Rabidou"
+date: "2023-06-15"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+``` {r setup, include = FALSE}
+# Installing and loading packages that will be used
+library(tidyverse)
+library(knitr)
+library(readr)
+```
+
+# Driving Data Description
+The dataset contains information on all 50 states as well as the District of Colombia for driving data. The intent of setting up this data was to look at what states have the best and worst drivers. The focus of the data is broken down into two sections; accident reports and insurance. Accidents are broken down by their potential causes and insurance looks at claims and payouts. Through this assignment, the focus is going to be on the accidents and looking at the differences of probabilities of a certain event whether alcohol, speeding, etc is more common in fatal accidents. 
+The bad drivers data file was sourced as a csv file therefore it has a comma delimiter. As the file was found on GitHub, it can easily be read into RStudio through the url link with taking notice of the delimiter properly. 
+
+
+# Uploading and Cleaning Data
+```{r url, include = TRUE, message = FALSE}
+# Section 2
+# Name the link then create a new set after uploading the file
+url <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/bad-drivers/bad-drivers.csv"
+DrivingData <- read_csv(url)
+# As the dataset was set as a csv file from GitHub, I found it best to use read.csv to read in the data. This reading function requires the "readr" package. This function also takes care of noticing the headers (row/column names) as well as the delimiter which in this case was a comma. Using read_csv() also allows for the column names to not be changed if there are spaces. 
+``` 
+
+```{r cleanData, include = TRUE}
+# Section 3
+# I am first going to rename some of the columns and use short hand as they have the majority of the same beginning phrase just a different category of driving. 
+# Short hand examples: 
+# Number of drivers involved in fatal collisions per billion miles = NoDiFC_perBillionMiles
+# Percentage Of Drivers Involved In Fatal Collisions Who Were Speeding = PoDiFC_Speeding ...(PoDIFC will be the same for the columns with the cuase cahnging after underscore)
+
+renamedDrivingData <- DrivingData %>% rename("NoDiFC_perBillionMiles" = "Number of drivers involved in fatal collisions per billion miles", "PoDiFC_Speeding" = "Percentage Of Drivers Involved In Fatal Collisions Who Were Speeding", "PoDiFC_AlcoholImpaired" = "Percentage Of Drivers Involved In Fatal Collisions Who Were Alcohol-Impaired" , "PoDiFC_NotDistracted" = "Percentage Of Drivers Involved In Fatal Collisions Who Were Not Distracted" , "PoDiFC_NoPreviousAccidents" = "Percentage Of Drivers Involved In Fatal Collisions Who Had Not Been Involved In Any Previous Accidents")
+
+# To simplify the data and look at only the percentages I am going to remove the insurance premiums and payouts (subsetting the renamed data file). Just looking to focus on the amount of people involved in accidents and there causes. 
+
+subsettedDrivingData <- renamedDrivingData %>% select(-`Car Insurance Premiums ($)` , -`Losses incurred by insurance companies for collisions per insured driver ($)`)
+```
+
+# Data Characteristics
+This dataframe has `r nrow(subsettedDrivingData)` rows and `r ncol(subsettedDrivingData)` columns. The names of the columns and a brief description of each are in the table below.
+
+
+```{r results = TRUE}
+#Section 4
+library(knitr)
+columns_summary <- data.frame(Columns = c(colnames(subsettedDrivingData)),Description = c("States/Districts in the United States", "Number of drivers involved in fatal collisions per billion miles", "Percentage Of Drivers Involved In Fatal Collisions Who Were Speeding", "Percentage Of Drivers Involved In Fatal Collisions Who Were Alcohol-Impaired", "Percentage Of Drivers Involved In Fatal Collisions Who Were Not Distracted", "Percentage Of Drivers Involved In Fatal Collisions Who Had Not Been Involved In Any Previous Accidents" ))
+
+kable(columns_summary, caption = "Measures of Driving In the United States")
+```
+# Summary of Subsetted Data
+
+```{r subsetting, echo = TRUE}
+# Section 5
+sectionFiveSubset <-  select(subsettedDrivingData, PoDiFC_Speeding, PoDiFC_AlcoholImpaired, PoDiFC_NoPreviousAccidents)
+
+speedingSubset <-  select(subsettedDrivingData, PoDiFC_Speeding)
+alcoholSubset <-  select(subsettedDrivingData, PoDiFC_AlcoholImpaired)
+accidentSubset <-  select(subsettedDrivingData, PoDiFC_NoPreviousAccidents)
+```
+
+```{r summarySomeData, echo = TRUE}
+
+summarySection5 <- summary(sectionFiveSubset)
+
+kable(summarySection5, caption = "Summary of Accident Report Variables")
+
+
+```
+
+The probability of a fatal accident from speeding has `r  sum(is.na(speedingSubset))` missing values. 
+The probability of a fatal accident from being Alcohol Impaired has `r  sum(is.na(alcoholSubset))` missing values. 
+The probability of a fatal accident from having no previous accidents has `r  sum(is.na(accidentSubset))` missing values. 
